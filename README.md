@@ -1,7 +1,10 @@
 - Clone the repo
 
-```jsx
+
 git clone https://github.com/soumya773/paytm_next_app.git
+
+
+
 ```
 
 - npm install
