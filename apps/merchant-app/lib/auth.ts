@@ -1,7 +1,9 @@
-import GoogleProvider from "next-auth/providers/google";
-import db from "@repo/db/client";
 
-export const authOptions = {
+import GoogleProvider from "next-auth/providers/google";
+import type { NextAuthOptions } from "next-auth";
+import db from "@repo/db";
+
+export const authOptions: NextAuthOptions = {
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -9,40 +11,34 @@ export const authOptions = {
         })
     ],
     callbacks: {
-      async signIn({ user, account }: {
-        user: {
-          email: string;
-          name: string
-        },
-        account: {
-          provider: "google" | "github"
-        }
-      }) {
-        console.log("hi signin")
-        if (!user || !user.email) {
-          return false;
-        }
+        async signIn({ user, account }) {
+            if (!user.email || !account) {
+                return false;
+            }
 
-        await db.merchant.upsert({
-          select: {
-            id: true
-          },
-          where: {
-            email: user.email
-          },
-          create: {
-            email: user.email,
-            name: user.name,
-            auth_type: account.provider === "google" ? "Google" : "Github" // Use a prisma type here
-          },
-          update: {
-            name: user.name,
-            auth_type: account.provider === "google" ? "Google" : "Github" // Use a prisma type here
-          }
-        });
+            const authType =
+                account.provider === "google" ? "Google" : "Github";
 
-        return true;
-      }
+            await db.merchant.upsert({
+                select: {
+                    id: true
+                },
+                where: {
+                    email: user.email
+                },
+                create: {
+                    email: user.email,
+                    name: user.name,
+                    auth_type: authType
+                },
+                update: {
+                    name: user.name,
+                    auth_type: authType
+                }
+            });
+
+            return true;
+        }
     },
     secret: process.env.NEXTAUTH_SECRET || "secret"
-  }
+};
